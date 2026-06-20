@@ -1,52 +1,58 @@
-# TourForge Monorepo
+# kNavigate — Karunya Navigator
 
-This repository contains the TourForge mapping engine and its associated consumer applications. It uses a monorepo structure to manage the relationship between the shared engine and multiple branded implementations.
+A GPS-guided campus tour app for **Karunya Institute of Technology and Sciences**, Coimbatore. As you walk the campus, Karunya Navigator plays short audio narration at each stop, with an offline map, photos, and a satellite view.
 
-## History and Problem Solving
+Built on the open-source [TourForge](https://github.com/tourforge) engine.
 
-The TourForge ecosystem was originally distributed across multiple independent repositories. This decentralized structure presented several technical challenges as the project scaled.
+---
 
-### The Problem
-- **Manual Dependency Linking**: Native dependencies were integrated manually into each application's iOS and Android folders. This made the build process fragile and non-reproducible across different developer environments.
-- **Configuration Drift**: Each application maintained independent build files. Over time, these files diverged, leading to situations where an engine update would work in one application but fail in another due to inconsistent NDK versions or iOS deployment targets.
-- **Workflow Latency**: The engine was imported via Git URLs. This meant that any modification to the core mapping logic required a commit and push cycle before it could be verified within a consumer application.
+## Features
 
-### The Solution: Monorepo Consolidation
-This monorepo was established to resolve these inefficiencies by consolidating the engine and all applications into a single atomic workspace.
-- **Direct Workspace Resolution**: By using Dart 3.6 Pub Workspaces, applications resolve the engine package locally. This enables real-time cross-package debugging and eliminates Git-based dependency overhead.
-- **Centralized Build Specifications**: Shared native logic was moved to a root directory. Applications now reference these shared specifications, ensuring that SDK versions and build hooks remain synchronized across the entire ecosystem.
-- **Automated Validation**: A workspace-wide audit tool was introduced to detect configuration drift, ensuring that all production implementations remain compliant with the reference build specification.
+- 🎧 **GPS audio tour** — narration triggers automatically as you reach each of the 27 campus stops
+- 🗺️ **Offline base map** — the campus vector map is bundled in the app (works with no signal)
+- 🛰️ **Satellite view** — toggle to Esri World Imagery (no API key)
+- 📥 **Download once, use offline** — tour audio, photos, and map cached on device
+- 🔄 **Over-the-air updates** — the app updates itself from v2 onward (no Play Store needed)
+- 🎨 **Karunya design system** — royal blue `#034DA2` + gold `#B59758`, light & dark, large legible type
 
-## Architectural Structure
+## Architecture
 
-This monorepo is managed by Melos. This format allows for centralized management of dependencies and build configurations across multiple packages.
+This is a Flutter **pub workspace** (white-label pattern):
 
-### Directory Layout
-- packages/baseline: The core Flutter plugin containing the mapping and navigation engine.
-- apps/baseline-app: The reference implementation used for debugging and as a structural template.
-- apps/florence-navigator: A production tour application for Florence, SC.
-- apps/fmu-campus-tour: A production tour application for Francis Marion University.
-- scripts/: Shared build logic for Android (Gradle) and iOS (CocoaPods).
+```
+apps/karunya-navigator/   → the Karunya app: branding, theme, onboarding, bundled offline map
+packages/baseline/        → forked TourForge "baseline" engine (UI, MapLibre map, downloader)
+```
 
-## Technical Implementation
+- **Engine:** a fork of [`tourforge/baseline`](https://github.com/tourforge) — the app injects branding/theme/endpoints via `TourForgeConfig`.
+- **Tour content** is hosted on **Cloudflare R2** and read at runtime from `…/v2/tourforge.json` (content-addressed assets). Content updates roll out automatically — no app rebuild.
+- **Base map** is a bundled `assets/tiles.mbtiles` (OpenMapTiles vector tiles of the campus, generated with [planetiler](https://github.com/onthegomap/planetiler) from OpenStreetMap data).
+- **Auto-updater:** on launch the app checks `…/app/version.json`; if a newer build exists it downloads and installs the APK.
 
-### Dart Pub Workspaces
-This workspace uses the Dart 3.6 Pub Workspaces feature. All member packages include the resolution: workspace field in their pubspec.yaml. This configuration allows packages within the workspace to resolve each other natively without requiring relative path overrides.
+## Build
 
-### Build Specifications
-Native build settings are centralized in the scripts/ directory.
-- scripts/common.gradle: Defines Android SDK versions, NDK versions, and ABI filtering for all applications.
-- scripts/common_podfile.rb: Defines the iOS deployment target and post-install hooks for all applications.
+Requirements: **Flutter 3.44+** (Dart 3.12), **JDK 17**, Android SDK (compile/target 36).
 
-### Development Environment
-The environment is managed by devenv (Nix). This ensures that the Flutter SDK, Melos, Android toolchain, and CocoaPods are synchronized across all development machines.
+```bash
+flutter pub get                       # from the workspace root (resolves all members)
+cd apps/karunya-navigator
+flutter build apk --release           # signed release (see Signing below)
+```
 
-## Workspace Integrity Audit
+### Signing
+Release signing reads `apps/karunya-navigator/android/key.properties` (git-ignored) which points to a keystore (also git-ignored). Create your own `key.properties` + keystore to build signed releases.
 
-The workspace includes a validation script located at scripts/validate_workspace.dart. This script performs the following checks:
-1. Configuration Drift: Compares the build.gradle and Podfile of consumer apps against the baseline-app to ensure structural parity.
-2. Resource Verification: Checks for the presence of required assets such as tomtom.txt.
-3. Distribution Audit: Verifies that production apps have a key.properties file for Android signing.
+## Content & releases
 
-The audit is executed via the following command:
-`dart scripts/validate_workspace.dart`
+- **Tour content:** edited in the TourForge builder, exported as `tourforge.json` + hash-named assets, and synced to the R2 bucket under `v2/`.
+- **App releases:** the APK is uploaded to R2 under `app/` and `app/version.json` is bumped; installed apps then prompt to update. Tagged builds are also published under [Releases](../../releases).
+
+## Credits
+
+- Engine: [TourForge](https://github.com/tourforge) (open source)
+- Map data: © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, styled with [OpenMapTiles](https://openmaptiles.org/)
+- Satellite imagery: © Esri, Maxar, Earthstar Geographics
+
+---
+
+_Karunya Navigator is an independent project for Karunya Institute of Technology and Sciences._
