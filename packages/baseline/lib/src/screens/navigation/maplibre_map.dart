@@ -215,14 +215,6 @@ class _MapLibreMapState extends State<MapLibreMap> {
           await assetBundle.loadString('$assetPrefix/assets/style.json');
       var satStyleText = await assetBundle
           .loadString('$assetPrefix/assets/style-satellite.json');
-      var tomtomKey = "";
-      try {
-        tomtomKey = (await assetBundle.loadString('assets/tomtom.txt')).trim();
-      } catch (e) {
-        if (kDebugMode) {
-          print("Failed to load TomTom key. Proceeding with empty key.");
-        }
-      }
       var spritePng = await assetBundle.load('$assetPrefix/assets/sprite.png');
       var spriteJson =
           await assetBundle.loadString('$assetPrefix/assets/sprite.json');

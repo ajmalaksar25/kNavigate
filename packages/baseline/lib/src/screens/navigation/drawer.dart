@@ -84,7 +84,7 @@ class TourNavigationDrawerState extends State<TourNavigationDrawer>
                     child: const UnconstrainedBox(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: Colors.grey,
+                          color: Color(0x66FFFFFF), // white @ 40% (const; matches panel withAlpha use)
                           borderRadius: BorderRadius.all(Radius.circular(5)),
                         ),
                         child:

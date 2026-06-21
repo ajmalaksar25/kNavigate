@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../config.dart';
 import '../../controllers/narration_playback.dart';
 import '../../models/current_waypoint.dart';
 import '../../data.dart';
@@ -57,10 +58,10 @@ class NavigationPanel extends StatelessWidget {
                     child: Text(
                       currentWaypoint.index != null
                           ? "${currentWaypoint.index! + 1}. ${tour.route[currentWaypoint.index!].title}"
-                          : "No Narration Playing",
+                          : "No narration playing",
                       style: Theme.of(context).textTheme.titleMedium!.copyWith(
                             color: currentWaypoint.index == null
-                                ? Colors.grey
+                                ? Colors.white.withAlpha(140)
                                 : Colors.white,
                             fontStyle: currentWaypoint.index == null
                                 ? FontStyle.italic
@@ -122,6 +123,7 @@ class _AudioPositionSliderState extends State<_AudioPositionSlider> {
 
   @override
   Widget build(BuildContext context) {
+    final accent = tourForgeConfig.darkThemeData.colorScheme.primary;
     return Row(
       children: [
         const SizedBox(width: 8),
@@ -135,13 +137,13 @@ class _AudioPositionSliderState extends State<_AudioPositionSlider> {
           style: Theme.of(context)
               .textTheme
               .bodyMedium!
-              .copyWith(color: Colors.grey),
+              .copyWith(color: Colors.white.withAlpha(140)),
         ),
         Expanded(
           child: Slider(
-            thumbColor: Colors.white,
-            activeColor: Colors.white,
-            inactiveColor: Colors.white.withAlpha(32),
+            thumbColor: accent,
+            activeColor: accent,
+            inactiveColor: Colors.white.withAlpha(80),
             value: NarrationPlaybackController.instance.state !=
                     NarrationPlaybackState.loading
                 ? position
@@ -176,7 +178,7 @@ class _AudioPositionSliderState extends State<_AudioPositionSlider> {
           style: Theme.of(context)
               .textTheme
               .bodyMedium!
-              .copyWith(color: Colors.grey),
+              .copyWith(color: Colors.white.withAlpha(140)),
         ),
         const SizedBox(width: 16),
       ],
@@ -214,10 +216,15 @@ class _AudioControlButtonState extends State<_AudioControlButton> {
   Widget build(BuildContext context) {
     var isEnabled = NarrationPlaybackController.instance.state !=
         NarrationPlaybackState.stopped;
+    // Playback uses the same blue as the drawer's WaypointCard play buttons
+    // (gold is reserved for the outdoor map controls). The dark theme's primary
+    // is the light blue that stays legible on this near-black bar.
+    final accent = tourForgeConfig.darkThemeData.colorScheme.primary;
     return IconButton(
       onPressed: isEnabled ? _onPressed : null,
       iconSize: 48,
-      icon: _icon(),
+      disabledColor: Colors.white.withAlpha(70),
+      icon: _icon(accent),
     );
   }
 
@@ -238,25 +245,23 @@ class _AudioControlButtonState extends State<_AudioControlButton> {
     }
   }
 
-  Widget _icon() {
+  Widget _icon(Color color) {
     switch (NarrationPlaybackController.instance.state) {
       case NarrationPlaybackState.playing:
-        return const Icon(Icons.pause, color: Colors.white);
+        return Icon(Icons.pause, color: color);
       case NarrationPlaybackState.paused:
-        return const Icon(Icons.play_arrow, color: Colors.white);
+        return Icon(Icons.play_arrow, color: color);
       case NarrationPlaybackState.completed:
-        return const Icon(Icons.replay, color: Colors.white);
+        return Icon(Icons.replay, color: color);
       case NarrationPlaybackState.stopped:
-        return const Icon(Icons.play_arrow, color: Colors.white);
+        return Icon(Icons.play_arrow, color: color);
       case NarrationPlaybackState.loading:
-        return const SizedBox(
+        return SizedBox(
           width: 48,
           height: 48,
           child: Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircularProgressIndicator(
-              color: Colors.white,
-            ),
+            padding: const EdgeInsets.all(8.0),
+            child: CircularProgressIndicator(color: color),
           ),
         );
     }

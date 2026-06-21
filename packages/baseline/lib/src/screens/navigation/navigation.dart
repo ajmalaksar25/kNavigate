@@ -300,39 +300,56 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 ),
               ),
               Positioned(
-                top: 5.0,
+                top: 0.0,
                 left: 0.0,
                 right: 0.0,
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Center(
-                      child: Material(
-                        color: Theme.of(context).colorScheme.secondary,
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(25)),
-                        child: SizedBox(
-                          height: 50,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0),
-                                child: Text(
-                                  "Navigating",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineSmall!
-                                      .copyWith(
-                                        fontSize: 22,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSecondary,
-                                      ),
-                                ),
+                    // Centered against the 56px control row so the status pill
+                    // shares a clean centerline with the Back/Help buttons.
+                    child: SizedBox(
+                      height: 56,
+                      child: Center(
+                        // Flat (no elevation/shadow) + smaller so it reads as
+                        // status, not a tappable control like the gold circles.
+                        child: Semantics(
+                          label: "Navigating",
+                          button: false,
+                          child: Material(
+                            color: Theme.of(context).colorScheme.secondary,
+                            elevation: 0,
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(24)),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0, vertical: 8.0),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.near_me,
+                                    size: 16,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSecondary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "Navigating",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge!
+                                        .copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSecondary,
+                                        ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -346,22 +363,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Material(
-                      borderRadius: const BorderRadius.all(Radius.circular(30)),
-                      color: Theme.of(context).colorScheme.secondary,
-                      child: SizedBox(
-                        width: 60,
-                        height: 60,
-                        child: IconButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          iconSize: 32,
-                          splashRadius: 30,
-                          color: Theme.of(context).colorScheme.onSecondary,
-                          icon: const Icon(Icons.arrow_back),
-                        ),
-                      ),
+                    child: _MapCircleButton(
+                      tooltip: "Back",
+                      icon: Icons.arrow_back,
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
                   ),
                 ),
@@ -467,122 +472,98 @@ class _NavigationScreenState extends State<NavigationScreen> {
   }
 }
 
+/// A floating gold map control. Gold (not frosted) is a deliberate choice for
+/// outdoor sunlight readability on a walking tour; the soft shadow lifts it off
+/// the map so it reads as a control, not a label.
+class _MapCircleButton extends StatelessWidget {
+  const _MapCircleButton({
+    required this.icon,
+    required this.onPressed,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback onPressed;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      shape: const CircleBorder(),
+      color: scheme.secondary,
+      elevation: 3,
+      shadowColor: Colors.black.withAlpha(80),
+      child: SizedBox(
+        width: 56,
+        height: 56,
+        child: IconButton(
+          tooltip: tooltip,
+          onPressed: onPressed,
+          iconSize: 28,
+          color: scheme.onSecondary,
+          icon: Icon(icon),
+        ),
+      ),
+    );
+  }
+}
+
 class _SatelliteEnabledButton extends StatelessWidget {
-  const _SatelliteEnabledButton({
-    Key? key,
-  }) : super(key: key);
+  const _SatelliteEnabledButton();
 
   @override
   Widget build(BuildContext context) {
     var satelliteEnabled = context.watch<SatelliteEnabledModel>();
-
-    return Material(
-      borderRadius: const BorderRadius.all(Radius.circular(30)),
-      color: Theme.of(context).colorScheme.secondary,
-      child: SizedBox(
-        width: 60,
-        height: 60,
-        child: IconButton(
-          onPressed: () {
-            satelliteEnabled.value = !satelliteEnabled.value;
-          },
-          iconSize: 32,
-          splashRadius: 30,
-          color: Theme.of(context).colorScheme.onSecondary,
-          icon: satelliteEnabled.value
-              ? const Icon(Icons.layers_clear)
-              : const Icon(Icons.layers),
-        ),
-      ),
+    return _MapCircleButton(
+      tooltip: satelliteEnabled.value ? "Map view" : "Satellite view",
+      icon: satelliteEnabled.value ? Icons.map_outlined : Icons.satellite_alt,
+      onPressed: () => satelliteEnabled.value = !satelliteEnabled.value,
     );
   }
 }
 
 class _HelpButton extends StatelessWidget {
-  const _HelpButton({Key? key, required this.onPressed}) : super(key: key);
+  const _HelpButton({required this.onPressed});
 
   final void Function() onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      borderRadius: const BorderRadius.all(Radius.circular(30)),
-      color: Theme.of(context).colorScheme.secondary,
-      child: SizedBox(
-        width: 60,
-        height: 60,
-        child: IconButton(
-          onPressed: onPressed,
-          iconSize: 32,
-          splashRadius: 30,
-          color: Theme.of(context).colorScheme.onSecondary,
-          icon: const Icon(Icons.question_mark),
-        ),
-      ),
+    return _MapCircleButton(
+      tooltip: "Help",
+      icon: Icons.question_mark,
+      onPressed: onPressed,
     );
   }
 }
 
 class _FakeGpsButton extends StatelessWidget {
-  const _FakeGpsButton({
-    Key? key,
-  }) : super(key: key);
+  const _FakeGpsButton();
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      borderRadius: const BorderRadius.all(Radius.circular(30)),
-      color: Theme.of(context).colorScheme.secondary,
-      child: SizedBox(
-        width: 60,
-        height: 60,
-        child: IconButton(
-          onPressed: () {
-            var fakeGps = context.read<FakeGpsModel>();
-
-            fakeGps.value = !fakeGps.value;
-          },
-          iconSize: 32,
-          splashRadius: 30,
-          color: Theme.of(context).colorScheme.onSecondary,
-          icon: const Icon(Icons.bug_report),
-        ),
-      ),
+    return _MapCircleButton(
+      tooltip: "Simulate GPS",
+      icon: Icons.bug_report,
+      onPressed: () {
+        var fakeGps = context.read<FakeGpsModel>();
+        fakeGps.value = !fakeGps.value;
+      },
     );
   }
 }
 
-class _MapControllednessButton extends StatefulWidget {
+class _MapControllednessButton extends StatelessWidget {
   const _MapControllednessButton();
 
   @override
-  State<_MapControllednessButton> createState() =>
-      _MapControllednessButtonState();
-}
-
-class _MapControllednessButtonState extends State<_MapControllednessButton> {
-  @override
   Widget build(BuildContext context) {
     var mapControlledness = context.watch<MapControllednessModel>();
-
-    return Material(
-      borderRadius: const BorderRadius.all(Radius.circular(30)),
-      color: Theme.of(context).colorScheme.secondary,
-      child: SizedBox(
-        width: 60,
-        height: 60,
-        child: IconButton(
-          onPressed: () {
-            mapControlledness.value = !mapControlledness.value;
-          },
-          iconSize: 32,
-          splashRadius: 30,
-          color: Theme.of(context).colorScheme.onSecondary,
-          icon: mapControlledness.value
-              ? const Icon(Icons.gps_fixed)
-              : const Icon(Icons.gps_not_fixed),
-        ),
-      ),
+    return _MapCircleButton(
+      tooltip: "Recenter",
+      icon: mapControlledness.value ? Icons.gps_fixed : Icons.gps_not_fixed,
+      onPressed: () => mapControlledness.value = !mapControlledness.value,
     );
   }
 }
