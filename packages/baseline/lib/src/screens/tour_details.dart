@@ -61,26 +61,16 @@ class _TourDetailsState extends State<TourDetails>
     if (!_isLoaded) {
       action = null;
     } else if (_isFullyDownloaded) {
-      action = ElevatedButton(
+      action = ElevatedButton.icon(
         onPressed: () {
           Navigator.of(context).push(NavigationRoute(widget.tour));
         },
-        style: const ButtonStyle(
-            padding: WidgetStatePropertyAll(EdgeInsets.zero),
-            shape: WidgetStatePropertyAll(
-              RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-              ),
-            )),
-        child: const Row(
-          children: [
-            SizedBox(width: 12.0),
-            Icon(Icons.explore),
-            SizedBox(width: 8.0),
-            Text("Start"),
-            SizedBox(width: 12.0),
-          ],
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(0, 44),
+          padding: const EdgeInsets.symmetric(horizontal: 18),
         ),
+        icon: const Icon(Icons.navigation_rounded, size: 20),
+        label: const Text("Start"),
       );
     } else {
       action = _DownloadButton(
@@ -216,32 +206,33 @@ class TourNotDownloadedWarning extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20.0,
-        vertical: 16.0,
-      ),
-      color: Theme.of(context).colorScheme.secondary.withAlpha(128),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Note",
-            style: Theme.of(context)
-                .textTheme
-                .labelMedium!
-                .copyWith(color: Colors.white.withAlpha(128)),
-          ),
-          const SizedBox(height: 6.0),
-          Text(
-            "You can view information about this tour before downloading it, but "
-            "the tour must be fully downloaded before use.",
-            style: Theme.of(context)
-                .textTheme
-                .bodyLarge!
-                .copyWith(color: Colors.white),
-          ),
-        ],
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
+      child: Container(
+        padding: const EdgeInsets.all(14.0),
+        decoration: BoxDecoration(
+          color: scheme.secondaryContainer,
+          borderRadius: const BorderRadius.all(Radius.circular(14)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.info_outline,
+                size: 20, color: scheme.onSecondaryContainer),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                "Download this tour once to use it offline — the map, photos and "
+                "audio all keep working without a signal.",
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium!
+                    .copyWith(color: scheme.onSecondaryContainer),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -317,52 +308,21 @@ class _DownloadButtonState extends State<_DownloadButton> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.secondary,
-              borderRadius: const BorderRadius.all(Radius.circular(12.0)),
-            ),
-          ),
-        ),
-        Positioned.fill(
-          child: ClipRect(
-            clipper: _DownloadIconClipper(_downloadProgress),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondaryContainer,
-                borderRadius: const BorderRadius.all(Radius.circular(12.0)),
-              ),
-            ),
-          ),
-        ),
-        ElevatedButton(
+    return ValueListenableBuilder<double>(
+      valueListenable: _downloadProgress,
+      builder: (context, progress, _) {
+        final downloading = _tourDownload != null;
+        final pct = (progress.clamp(0.0, 1.0) * 100).round();
+        return ElevatedButton.icon(
           onPressed: _download,
-          style: const ButtonStyle(
-            backgroundColor: WidgetStatePropertyAll(Colors.transparent),
-            shadowColor: WidgetStatePropertyAll(Colors.transparent),
-            foregroundColor: WidgetStatePropertyAll(Colors.white),
-            padding: WidgetStatePropertyAll(EdgeInsets.zero),
-            shape: WidgetStatePropertyAll(
-              RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(12.0)),
-              ),
-            ),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(0, 44),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
           ),
-          child: Row(
-            children: [
-              const SizedBox(width: 12.0),
-              const Icon(Icons.download),
-              const SizedBox(width: 8.0),
-              Text(_tourDownload != null ? "Downloading..." : "Download"),
-              const SizedBox(width: 12.0),
-            ],
-          ),
-        ),
-      ],
+          icon: const Icon(Icons.download, size: 20),
+          label: Text(downloading ? "Downloading $pct%" : "Download"),
+        );
+      },
     );
   }
 
@@ -420,7 +380,7 @@ class _WaypointList extends StatelessWidget {
         (context, index) {
           return Padding(
             padding:
-                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: WaypointCard(
               waypoint: tour!.route[index],
               index: index,
@@ -429,32 +389,6 @@ class _WaypointList extends StatelessWidget {
         },
       ),
     );
-  }
-}
-
-class _DownloadIconClipper extends CustomClipper<Rect> {
-  _DownloadIconClipper(this.reclip) : super(reclip: reclip) {
-    reclip.addListener(_onClipChanged);
-  }
-
-  void dispose() {
-    reclip.removeListener(_onClipChanged);
-  }
-
-  final ValueNotifier<double> reclip;
-
-  late double currentClip = reclip.value;
-
-  @override
-  Rect getClip(Size size) {
-    return Rect.fromLTRB(0, 0, size.width * currentClip, size.height);
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Rect> oldClipper) => true;
-
-  void _onClipChanged() {
-    currentClip = reclip.value;
   }
 }
 

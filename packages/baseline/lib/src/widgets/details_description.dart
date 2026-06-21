@@ -14,20 +14,20 @@ class DetailsDescription extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(
-          left: 20.0, right: 20.0, top: 20.0, bottom: 16.0),
+          left: 16.0, right: 16.0, top: 20.0, bottom: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           if (header != null)
             Text(
-              header!,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelMedium!
-                  .copyWith(color: Colors.grey),
+              header!.toUpperCase(),
+              style: Theme.of(context).textTheme.labelMedium!.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    letterSpacing: 0.6,
+                  ),
             ),
-          if (header != null) const SizedBox(height: 6),
+          if (header != null) const SizedBox(height: 8),
           Text(
             desc,
             style: Theme.of(context).textTheme.bodyLarge,

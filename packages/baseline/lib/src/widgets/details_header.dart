@@ -10,36 +10,17 @@ class DetailsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(
-            top: 20.0,
-            bottom: 4.0,
-          ),
-          child: Material(
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
-            elevation: 3,
-            type: MaterialType.card,
-            shadowColor: Colors.transparent,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 32.0,
-                vertical: 12.0,
-              ),
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
+    // iOS grouped-list section caption — same language as DetailsDescription's
+    // header so peer sections on a screen read as one consistent family.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 8.0),
+      child: Text(
+        title.toUpperCase(),
+        style: Theme.of(context).textTheme.labelMedium!.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              letterSpacing: 0.6,
             ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
